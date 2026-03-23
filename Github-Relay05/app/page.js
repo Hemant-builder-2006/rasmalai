@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -9,6 +9,7 @@ import {
   Sun,
   Moon,
   ArrowRight,
+  ArrowUp,
   Users,
   Shield,
   Zap,
@@ -17,25 +18,20 @@ import {
   MapPin,
   Menu,
   X,
-  Home,
   Info,
   Phone,
   User,
   LogIn,
-  Bell,
   Heart,
   ChevronLeft,
   ChevronRight,
   FileText,
   TrendingUp,
   Award,
-  Clock,
   DollarSign,
   Eye,
-  ThumbsUp,
   Mail,
   Facebook,
-  Twitter,
   Instagram,
   Linkedin,
   MessageCircle,
@@ -56,6 +52,9 @@ const CampusMart = () => {
   const [currentProductSlide, setCurrentProductSlide] = useState(0);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
   const [isSticky, setIsSticky] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const mobileMenuRef = useRef(null);
+  const mobileMenuButtonRef = useRef(null);
 
   // College context
   const { selectedCollege, setSelectedCollege, colleges } = useCollege();
@@ -86,6 +85,19 @@ const CampusMart = () => {
       imageUrl: "https://ik.imagekit.io/zuxeumnng/Testimonials/test6.jpg"
     }
   ];
+
+  // Bug 6 fix: extract UI copy to dictionary keys for easier localization.
+  const messages = {
+    brandName: 'CampusMart',
+    brandTagline: 'Student Marketplace',
+    heroBuy: 'Buy now',
+    heroAssignment: 'Create Assignment',
+    heroSell: 'Sell Now',
+    servicesTitle: 'Our Services',
+    servicesSubtitle: 'Choose the service that fits your needs',
+    trendingTitle: 'Trending Products',
+    trendingSubtitle: 'Discover the most popular items from students in your campus',
+  };
 
   // Trending products: will be populated from shared-listing IDs
   const [featuredProducts, setFeaturedProducts] = useState([
@@ -343,17 +355,17 @@ const CampusMart = () => {
     {
       id: 1,
       image: "https://ik.imagekit.io/zuxeumnng/campusmart/Asserts/Buy.png?updatedAt=1757882682300",
-      buttonText: "Buy now"
+      buttonText: messages.heroBuy
     },
     {
       id: 2,
       image: "https://ik.imagekit.io/zuxeumnng/campusmart/Asserts/Assignment.png?updatedAt=1757927631064",
-      buttonText: "Create Assignment"
+      buttonText: messages.heroAssignment
     },
     {
       id: 3,
       image: "https://ik.imagekit.io/zuxeumnng/campusmart/Asserts/Sell.png?updatedAt=1757920843886",
-      buttonText: "Sell Now"
+      buttonText: messages.heroSell
     }
   ];
 
@@ -438,6 +450,8 @@ const CampusMart = () => {
     const handleScroll = () => {
       const scrollTop = window.pageYOffset;
       setIsSticky(scrollTop > 100);
+      // Bug 11 fix: show back-to-top button after meaningful scroll depth.
+      setShowBackToTop(scrollTop > 300);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -553,6 +567,10 @@ const CampusMart = () => {
     setIsMobileMenuOpen(prev => !prev);
   };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   const handleRoleSelect = (role) => {
     if (role === 'buyer') {
       router.push('/buyer-dashboard');
@@ -561,20 +579,27 @@ const CampusMart = () => {
     }
   };
 
-  // Close mobile menu when clicking outside
-  // click outside logic removed for bug
-  /*
+  // Bug 5 fix: close mobile menu when clicking outside of the menu container.
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isMobileMenuOpen && !event.target.closest('.mobile-menu') && !event.target.closest('.mobile-menu-btn')) {
+      if (
+        isMobileMenuOpen &&
+        mobileMenuRef.current &&
+        mobileMenuButtonRef.current &&
+        !mobileMenuRef.current.contains(event.target) &&
+        !mobileMenuButtonRef.current.contains(event.target)
+      ) {
         setIsMobileMenuOpen(false);
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMobileMenuOpen]);
-  */
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -620,12 +645,12 @@ const CampusMart = () => {
             <div className="nav-brand">
               <div className="brand-logo">
                 <div className="logo-container">
-                  <img src="/logo.png" />
+                  <img src="/logo.png" alt="CampusMart logo" loading="eager" fetchPriority="high" />
                   {!isMobile && <div className="logo-pulse"></div>}
                 </div>
                 <div className="brand-text">
-                  <h1 className="brand-name">CampusMart</h1>
-                  {!isMobile && <span className="brand-tagline">Student Marketplace</span>}
+                  <h1 className="brand-name">{messages.brandName}</h1>
+                  {!isMobile && <span className="brand-tagline">{messages.brandTagline}</span>}
                 </div>
               </div>
             </div>
@@ -689,6 +714,7 @@ const CampusMart = () => {
               <button
                 className="mobile-menu-btn"
                 onClick={toggleMobileMenu}
+                ref={mobileMenuButtonRef}
                 aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
               >
                 {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -696,8 +722,10 @@ const CampusMart = () => {
             </div>
           </nav>
 
+          {isMobileMenuOpen && <div className="mobile-menu-backdrop" onClick={closeMobileMenu} aria-hidden="true" />}
+
           {/* Mobile Menu */}
-          <div className={`mobile-menu ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+          <div className={`mobile-menu ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`} ref={mobileMenuRef}>
             <div className="mobile-menu-content">
               <div className="mobile-search">
                 <div className="search-wrapper">
@@ -711,10 +739,10 @@ const CampusMart = () => {
               </div>
 
               <ul className="mobile-nav-menu">
-                <li><Link href="/buyer-dashboard" className="mobile-nav-link"><ShoppingBag size={20} /><span>Buy</span></Link></li>
-                <li><Link href="/assignments" className="mobile-nav-link"><FileText size={20} /><span>Assignment</span></Link></li>
-                <li><Link href="/seller-dashboard" className="mobile-nav-link"><Store size={20} /><span>Sell</span></Link></li>
-                <li><Link href="/about" className="mobile-nav-link"><Info size={20} /><span>About</span></Link></li>
+                <li><Link href="/buyer-dashboard" className="mobile-nav-link" onClick={closeMobileMenu}><ShoppingBag size={20} /><span>Buy</span></Link></li>
+                <li><Link href="/assignments" className="mobile-nav-link" onClick={closeMobileMenu}><FileText size={20} /><span>Assignment</span></Link></li>
+                <li><Link href="/seller-dashboard" className="mobile-nav-link" onClick={closeMobileMenu}><Store size={20} /><span>Sell</span></Link></li>
+                <li><Link href="/about" className="mobile-nav-link" onClick={closeMobileMenu}><Info size={20} /><span>About</span></Link></li>
               </ul>
               <div className="mobile-actions">
                 {/* <button className="mobile-notification-btn">
@@ -766,11 +794,18 @@ const CampusMart = () => {
                       transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
                     }}
                   >
-                    {heroSlides.map((slide) => (
+                    {heroSlides.map((slide, index) => (
                       <div key={slide.id} className="hero-slide">
                         <div className="hero-slide-content">
                           <div className="hero-slide-image">
-                            <img src={slide.image} />
+                            {/* Bug 2/3 fix: mark hero as critical and add descriptive alt text. */}
+                            <img
+                              src={slide.image}
+                              alt={`${messages.brandName} hero slide ${slide.id}`}
+                              loading={index === 0 ? 'eager' : 'lazy'}
+                              fetchPriority={index === 0 ? 'high' : 'auto'}
+                              decoding="async"
+                            />
                             <div className="hero-slide-overlay"></div>
                           </div>
                           <div className="hero-slide-button-container">
@@ -861,12 +896,12 @@ const CampusMart = () => {
         <div className="container">
           <div className="section-header">
             <h2 className="section-title">
-              {selectedCollege ? `Trending Products at ${selectedCollege}` : 'Trending Products'}
+              {selectedCollege ? `Trending Products at ${selectedCollege}` : messages.trendingTitle}
             </h2>
             <p className="section-subtitle">
               {selectedCollege 
                 ? `Discover the most popular items from students at ${selectedCollege}`
-                : 'Discover the most popular items from students in your campus'
+                : messages.trendingSubtitle
               }
             </p>
             {selectedCollege && (
@@ -900,7 +935,7 @@ const CampusMart = () => {
                       {featuredProducts.slice(slideIndex * 4, slideIndex * 4 + 4).map((product) => (
                         <div key={product.id} className="trending-product-card">
                           <div className="product-image-container">
-                            <img src={product.image} alt={product.title} className="product-image" />
+                            <img src={product.image} alt={`${product.title} product preview`} className="product-image" loading="lazy" decoding="async" />
                             <div className="product-badge">
                               {product.badge}
                             </div>
@@ -971,8 +1006,8 @@ const CampusMart = () => {
       <section className="services-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Our Services</h2>
-            <p className="section-subtitle">Choose the service that fits your needs</p>
+            <h2 className="section-title">{messages.servicesTitle}</h2>
+            <p className="section-subtitle">{messages.servicesSubtitle}</p>
           </div>
 
           <div className="services-grid">
@@ -1176,7 +1211,10 @@ const CampusMart = () => {
                             <div className="image-container">
                           <img 
                             src={testimonial.imageUrl} 
+                            alt={`CampusMart testimonial conversation ${testimonial.id}`}
                             className="testimonial-screenshot"
+                            loading="lazy"
+                            decoding="async"
                           />
                             </div>
                             <div className="testimonial-overlay">
@@ -1260,6 +1298,17 @@ const CampusMart = () => {
             </div>
           </div>
       </section>
+
+      {showBackToTop && (
+        <button
+          className="back-to-top-btn"
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          title="Back to top"
+        >
+          <ArrowUp size={20} />
+        </button>
+      )}
 
       {/* ZeberAI Style Footer - 4 Column Layout */}
       <footer className="zeberai-footer">

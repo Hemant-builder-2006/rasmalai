@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint . --ext .js,.jsx,.mjs"
   },
   "dependencies": {
     "@lottiefiles/dotlottie-react": "^0.14.4",
@@ -31,6 +31,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-icons": "^5.5.0",
+    "sonner": "^1.7.1",
     "three": "^0.179.1",
     "uuid": "^11.1.0"
   },
@@ -39,6 +40,8 @@
     "@types/imagekit": "^3.1.5",
     "autoprefixer": "^10.4.21",
     "cross-env": "^10.0.0",
+    "eslint": "^9.34.0",
+    "eslint-config-next": "^16.2.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17"
   }

@@ -1096,9 +1096,14 @@ const BuyerDashboard = () => {
   if (buyerLoading) {
     return (
       <div className={`dashboard ${isDarkTheme ? "dark" : "light"}`}>
-        <div className="loadingScreen">
-          <Loader2 size={48} className="spinner" />
-          <p>Loading your profile...</p>
+        {/* Bug 4 fix: skeleton layout keeps visual structure stable while profile loads. */}
+        <div className="loadingScreen dashboardSkeletonContainer">
+          <div className="dashboardSkeletonBar shimmer" />
+          <div className="dashboardSkeletonGrid">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="dashboardSkeletonCard shimmer" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -1696,8 +1701,12 @@ const BuyerDashboard = () => {
 
           {loading && (
             <div className="loadingContainer">
-              <Loader2 size={48} className="spinner" />
-              <p>Loading amazing deals...</p>
+              {/* Bug 4 fix: card skeletons mimic final product grid during loading. */}
+              <div className="dashboardSkeletonGrid">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div key={index} className="dashboardSkeletonCard shimmer" />
+                ))}
+              </div>
             </div>
           )}
 

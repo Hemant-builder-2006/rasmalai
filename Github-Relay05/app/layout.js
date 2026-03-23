@@ -2,9 +2,37 @@ import './global.css';
 import Script from "next/script";
 import ClientProviders from '../components/ClientProviders';
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://campusmart.app';
+
 export const metadata = {
-  title: 'CampusMart',
-  description: 'Your campus marketplace',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'CampusMart',
+    template: '%s | CampusMart',
+  },
+  description: 'CampusMart is a trusted student marketplace to buy, sell, and connect across campus communities.',
+  manifest: '/manifest.json',
+  openGraph: {
+    title: 'CampusMart',
+    description: 'Buy and sell with verified students in your campus community.',
+    url: siteUrl,
+    siteName: 'CampusMart',
+    images: [
+      {
+        url: '/logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'CampusMart',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CampusMart',
+    description: 'Buy and sell with verified students in your campus community.',
+    images: ['/logo.png'],
+  },
   icons: {
     icon: '/fav.jpg',
     shortcut: '/fav.jpg',
@@ -30,8 +58,7 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  // BUG: Hydration Mismatch - Date.now() differs on server/client
-  // We intentionally suppress the warning for the specific hydration mismatch to make it "subtle" but keeping the error logic
+  // Bug 8 fix: remove unstable client-only timestamp to avoid hydration mismatch.
   return (
     <html lang="en">
       <head>
@@ -47,9 +74,6 @@ export default function RootLayout({ children }) {
         <ClientProviders>
           {children}
         </ClientProviders>
-        <div style={{ display: 'none' }}>
-           Timestamp: {typeof window !== 'undefined' ? Date.now() : 'Server Time'} 
-        </div>
       </body>
     </html>
   );
